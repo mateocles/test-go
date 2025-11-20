@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 type album struct {
@@ -23,7 +25,19 @@ func getAlbum(c *gin.Context) {
 }
 
 func main() {
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
+	// No confiar en todos los proxies para evitar el warning
+	router.SetTrustedProxies(nil)
 	router.GET("/albums", getAlbum)
-	router.Run("localhost:8080")
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	// Escuchar en 0.0.0.0 para que la plataforma detecte el puerto
+	addr := ":" + port // Gin usa 0.0.0.0 por defecto cuando se omite host
+	if err := router.Run(addr); err != nil {
+		panic(err)
+	}
 }
